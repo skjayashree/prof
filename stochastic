@@ -1,0 +1,54 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.utils import to_categorical
+
+# Load the MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# Preprocess the data
+x_train = x_train.reshape(-1, 784).astype('float32') / 255.0
+x_test = x_test.reshape(-1, 784).astype('float32') / 255.0
+y_train = to_categorical(y_train, num_classes=10)
+y_test = to_categorical(y_test, num_classes=10)
+
+def create_model():
+    model = Sequential()
+    model.add(Dense(256, activation='relu', input_shape=(784,)))
+    model.add(Dropout(0.2))  # Dropout layer with 20% dropout rate
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.2))  # Dropout layer with 20% dropout rate
+    model.add(Dense(10, activation='softmax'))
+    return model
+
+def train_with_random_learning_rate():
+    model = create_model()
+    optimizer = SGD(learning_rate=0.01)  # Define the optimizer here with the desired learning rate
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    history = model.fit(x_train, y_train, batch_size=128, epochs=10, validation_split=0.1, verbose=1)
+    # Return the model and training history for plotting
+    return model, history
+
+num_experiments = 5
+stochastic_models = []
+training_histories = []
+
+for _ in range(num_experiments):
+    model, history = train_with_random_learning_rate()
+    stochastic_models.append(model)
+    training_histories.append(history.history)
+
+# Plot the training and validation accuracy over epochs for each stochastic model
+plt.figure(figsize=(10, 6))
+for i, history in enumerate(training_histories):
+    plt.plot(history['accuracy'], label=f'Stochastic Model {i + 1}')
+
+plt.title('Training Accuracy over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
